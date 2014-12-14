@@ -10,6 +10,7 @@
 #include "Sphere.h"
 #include "Line.h"
 #include "PiecewiseBezierCurve.h"
+#include "Camera.h"
 
 
 
@@ -18,6 +19,7 @@
 #define ROTSCALE 50.0;
 #define ZOOMSCALE 2.0;
 #define DELTA 0.1
+#define ANGLE 1.0
 
 
 using namespace std;
@@ -70,6 +72,8 @@ Vector3d eye(0, 2, -8);
 Vector3d lookat(0, 2, 0);
 Vector3d up(0, 1, 0);
 
+Camera cam(eye, lookat, up);
+
 KEY key = F1;
 
 void Window::init(){
@@ -119,7 +123,7 @@ void Window::reshapeCallback(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60.0, double(width) / (double)height, 1.0, 1000.0); // set perspective projection viewing frustum
-	gluLookAt(eye[0], eye[1], eye[2], lookat[0], lookat[1], lookat[2], up[0], up[1], up[2]);
+	//gluLookAt(eye[0], eye[1], eye[2], lookat[0], lookat[1], lookat[2], up[0], up[1], up[2]);
 	//pointLight.apply();
 }
 
@@ -129,14 +133,13 @@ void Window::displayCallback()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
+	//glLoadMatrixd(cam.getMatrix().getPointer());
 	//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, _ambient);
 	// set the diffuse reflection for the object
 	//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, _diffuse);
 	//root->draw(cam.getMatrix());
 	//root->draw(Matrix4d());
-	glLoadMatrixd((rotation * scaling).getPointer());
+	glLoadMatrixd((cam.getMatrix() * rotation * scaling).getPointer());
 	pbc->render(rotation * scaling);
 	
 	glFlush();
@@ -230,6 +233,27 @@ void Window::processSpecialKeys(int k, int x, int y){
 		pbc->selectPrev();
 		selected = true;
 		break;
+	case GLUT_KEY_F1:
+		cam.move(FORWARD, DELTA);
+		break;
+	case GLUT_KEY_F2:
+		cam.move(BACKWARD, DELTA);
+		break;
+	case GLUT_KEY_F3:
+		cam.move(LEFTWARD, DELTA);
+		break;
+	case GLUT_KEY_F4:
+		cam.move(RIGHTWARD, DELTA);
+		break;
+	case GLUT_KEY_F5:
+		cam.move(UPWARD, DELTA);
+		break;
+	case GLUT_KEY_F6:
+		cam.move(DOWNWARD, DELTA);
+		break;
+	case GLUT_KEY_F7:
+		cam.rotate(Vector3d(0, 1, 0), ANGLE);
+		break;
 	}
 }
 void Window::mouseMotionProcess(int x, int y){
@@ -247,10 +271,13 @@ void Window::mouseMotionProcess(int x, int y){
 			Vector3d rotAxis = lastPoint * curPoint;
 			rotAxis.normalize();
 			rot_angle = velocity * ROTSCALE;
+			/*
 			Matrix4d r;
 			r.makeRotate(rot_angle, rotAxis);
 			rotation = r * rotation;
 			rotate_mt->setMatrix(rotation);
+			*/
+			cam.rotate(rotAxis, rot_angle);
 		}
 	}
 		break;
